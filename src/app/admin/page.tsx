@@ -1,3 +1,4 @@
+// src/app/admin/page.tsx
 'use client';
 
 import React, { useState, useMemo } from 'react';
@@ -5,7 +6,7 @@ import { useOrders } from '@/lib/hooks/useOrders';
 import AdminPanel from '@/components/admin/AdminPanel';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils/formatters';
-import { ArrowLeft, UtensilsCrossed, BarChart3, Monitor, Calendar, Archive } from 'lucide-react';
+import { LayoutDashboard, ArrowLeft, UtensilsCrossed, BarChart3, Monitor } from 'lucide-react';
 import Image from 'next/image';
 
 export default function AdminDashboard() {
@@ -157,35 +158,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Admin Panel Container */}
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 md:p-8 relative">
-          {/* Filter Toggle - Ditempatkan absolute di kanan atas panel */}
-          <div className="md:absolute md:top-8 md:right-8 mb-6 md:mb-0 flex justify-end">
-            <div className="inline-flex bg-gray-100 p-1 rounded-xl">
-              <button
-                onClick={() => setFilter('today')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                  filter === 'today'
-                    ? 'bg-white text-orange-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <Calendar size={16} />
-                Hari Ini
-              </button>
-              <button
-                onClick={() => setFilter('all')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                  filter === 'all'
-                    ? 'bg-white text-orange-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <Archive size={16} />
-                Semua Riwayat
-              </button>
-            </div>
-          </div>
-
+        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 md:p-8">
           <AdminPanel
             orders={displayedOrders}
             onAddOrder={addOrder}
@@ -194,8 +167,8 @@ export default function AdminDashboard() {
             showForm={showForm}
             setShowForm={setShowForm}
             onUpdateStatus={updateOrderStatus}
-            filter={filter}         // <-- Meneruskan state filter
-            setFilter={setFilter}   // <-- Meneruskan setter filter
+            filter={filter}
+            setFilter={setFilter}
           />
         </div>
       </main>
