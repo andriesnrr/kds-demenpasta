@@ -1,8 +1,8 @@
-// src/components/kitchen/OrderGrid.tsx
 'use client';
 
 import { Order, OrderStatus } from '@/types/order';
 import OrderCard from './OrderCard';
+import { Bell, ChefHat, CheckCircle } from 'lucide-react';
 
 interface OrderGridProps {
   orders: Order[];
@@ -14,22 +14,38 @@ export default function OrderGrid({ orders, onUpdateStatus }: OrderGridProps) {
   const preparingOrders = orders.filter(o => o.status === 'preparing');
   const readyOrders = orders.filter(o => o.status === 'ready');
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Pending Column */}
-      <div>
-        <div className="bg-yellow-50 rounded-lg p-4 mb-4 border-2 border-yellow-300">
-          <h3 className="text-lg font-bold text-gray-800 flex items-center justify-between">
-            🔔 Pesanan Baru
-            <span className="bg-white px-3 py-1 rounded-full text-sm">
-              {pendingOrders.length}
-            </span>
-          </h3>
+  const ColumnHeader = ({ title, count, icon: Icon, colorClass, bgClass }: any) => (
+      <div className={`flex items-center justify-between p-4 rounded-xl mb-4 ${bgClass} border-2 ${colorClass}`}>
+        <div className="flex items-center gap-3">
+             <div className={`p-2 rounded-lg bg-white ${colorClass.replace('border', 'text')}`}>
+                 <Icon size={24} />
+             </div>
+             <h3 className="text-lg font-black text-gray-800 uppercase tracking-wide">
+                {title}
+             </h3>
         </div>
-        <div className="space-y-4">
+        <span className="bg-white text-gray-800 px-4 py-1.5 rounded-full font-black text-lg shadow-sm">
+          {count}
+        </span>
+      </div>
+  );
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+      {/* Pending Column */}
+      <div className="flex flex-col h-full">
+        <ColumnHeader 
+            title="Pesanan Baru" 
+            count={pendingOrders.length} 
+            icon={Bell}
+            bgClass="bg-yellow-50"
+            colorClass="border-yellow-400"
+        />
+        <div className="space-y-6 flex-1 overflow-y-auto pb-6 px-1">
           {pendingOrders.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
-              Tidak ada pesanan baru
+            <div className="text-center py-12 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-200">
+              <Bell size={48} className="mx-auto text-gray-300 mb-3" />
+              <p className="text-gray-400 font-medium">Tidak ada pesanan baru</p>
             </div>
           ) : (
             pendingOrders.map(order => (
@@ -44,19 +60,19 @@ export default function OrderGrid({ orders, onUpdateStatus }: OrderGridProps) {
       </div>
 
       {/* Preparing Column */}
-      <div>
-        <div className="bg-blue-50 rounded-lg p-4 mb-4 border-2 border-blue-300">
-          <h3 className="text-lg font-bold text-gray-800 flex items-center justify-between">
-            👨‍🍳 Sedang Dimasak
-            <span className="bg-white px-3 py-1 rounded-full text-sm">
-              {preparingOrders.length}
-            </span>
-          </h3>
-        </div>
-        <div className="space-y-4">
+      <div className="flex flex-col h-full">
+        <ColumnHeader 
+            title="Sedang Dimasak" 
+            count={preparingOrders.length} 
+            icon={ChefHat}
+            bgClass="bg-blue-50"
+            colorClass="border-blue-400"
+        />
+        <div className="space-y-6 flex-1 overflow-y-auto pb-6 px-1">
           {preparingOrders.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
-              Tidak ada pesanan sedang dimasak
+             <div className="text-center py-12 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-200">
+              <ChefHat size={48} className="mx-auto text-gray-300 mb-3" />
+              <p className="text-gray-400 font-medium">Dapur sedang santai</p>
             </div>
           ) : (
             preparingOrders.map(order => (
@@ -71,19 +87,19 @@ export default function OrderGrid({ orders, onUpdateStatus }: OrderGridProps) {
       </div>
 
       {/* Ready Column */}
-      <div>
-        <div className="bg-green-50 rounded-lg p-4 mb-4 border-2 border-green-300">
-          <h3 className="text-lg font-bold text-gray-800 flex items-center justify-between">
-            ✅ Siap Diantar
-            <span className="bg-white px-3 py-1 rounded-full text-sm">
-              {readyOrders.length}
-            </span>
-          </h3>
-        </div>
-        <div className="space-y-4">
+      <div className="flex flex-col h-full">
+        <ColumnHeader 
+            title="Siap Diantar" 
+            count={readyOrders.length} 
+            icon={CheckCircle}
+            bgClass="bg-green-50"
+            colorClass="border-green-400"
+        />
+        <div className="space-y-6 flex-1 overflow-y-auto pb-6 px-1">
           {readyOrders.length === 0 ? (
-            <div className="text-center py-8 text-gray-400">
-              Tidak ada pesanan siap
+             <div className="text-center py-12 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-200">
+              <CheckCircle size={48} className="mx-auto text-gray-300 mb-3" />
+              <p className="text-gray-400 font-medium">Belum ada yang siap</p>
             </div>
           ) : (
             readyOrders.map(order => (
