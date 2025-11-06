@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Order, OrderStatus } from '@/types/order';
-import { User, Phone, AlertCircle, CheckCircle, Package, ChefHat, Clock } from 'lucide-react';
+import { User, AlertCircle, CheckCircle, Package, ChefHat, Clock } from 'lucide-react';
 import { formatTime } from '@/lib/utils/formatters';
 import { getTimerColor } from '@/lib/utils/orderHelpers';
 
@@ -74,7 +74,6 @@ export default function OrderCard({ order, onUpdateStatus }: OrderCardProps) {
             <div key={idx} className="flex items-start gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
               <span className="text-2xl mt-0.5">🥟</span>
               <div className="flex-1">
-                {/* UBAHAN DI SINI: Format Nama Menu - Jumlah pcs */}
                 <div className="font-bold text-gray-800 text-lg leading-tight">
                   {item.menuName} - {item.quantity} pcs
                 </div>
@@ -94,7 +93,6 @@ export default function OrderCard({ order, onUpdateStatus }: OrderCardProps) {
                <p className="text-xs font-bold text-gray-500 uppercase mb-1">Tambahan:</p>
                {order.additionals.map((add, idx) => (
                  <div key={`add-${idx}`} className="flex justify-between text-sm bg-yellow-50 p-2 rounded-lg mb-1 text-yellow-800 font-bold">
-                    {/* Format untuk additional juga disesuaikan agar konsisten */}
                     <span>{add.name} - {add.quantity} pcs</span>
                  </div>
                ))}

@@ -185,8 +185,19 @@ export function exportDetailedOrdersToExcel(orders: Order[], filename: string = 
   wsOrders['!cols'] = Array(10).fill({ wch: 15 });
   XLSX.utils.book_append_sheet(wb, wsOrders, 'Orders');
 
+  // Define interface for breakdown items to avoid 'any'
+  interface ItemBreakdown {
+    'No. Order': string;
+    'Customer': string;
+    'Menu': string;
+    'Jumlah': number;
+    'Harga Satuan': number;
+    'Subtotal': number;
+    'Catatan': string;
+  }
+
   // Sheet 2: Items Breakdown
-  const itemsBreakdown: any[] = [];
+  const itemsBreakdown: ItemBreakdown[] = [];
   orders.forEach(order => {
     order.items.forEach(item => {
       itemsBreakdown.push({
@@ -204,8 +215,17 @@ export function exportDetailedOrdersToExcel(orders: Order[], filename: string = 
   wsItems['!cols'] = Array(7).fill({ wch: 18 });
   XLSX.utils.book_append_sheet(wb, wsItems, 'Items Detail');
 
+  interface AdditionalBreakdown {
+    'No. Order': string;
+    'Customer': string;
+    'Additional': string;
+    'Jumlah': number;
+    'Harga Satuan': number;
+    'Subtotal': number;
+  }
+
   // Sheet 3: Additional Breakdown
-  const additionalBreakdown: any[] = [];
+  const additionalBreakdown: AdditionalBreakdown[] = [];
   orders.forEach(order => {
     if (order.additionals) {
       order.additionals.forEach(add => {

@@ -17,10 +17,10 @@ export function useOrders() {
       ordersRef,
       (snapshot) => {
         try {
-          const data = snapshot.val();
+          const data = snapshot.val() as Record<string, Order> | null;
           if (data) {
             const ordersArray = Object.entries(data).map(([key, value]) => ({
-              ...(value as Order),
+              ...value,
               id: key,
             }));
             ordersArray.sort((a, b) => b.createdAt - a.createdAt);
@@ -47,20 +47,21 @@ export function useOrders() {
 
   const addOrder = async (order: Omit<Order, 'id'>) => {
     try {
-      const cleanOrder = { ...order };
+      // Gunakan Partial<Order> untuk objek sementara yang akan dibersihkan
+      const cleanOrder: Partial<Order> & Omit<Order, 'id'> = { ...order };
       
       if (cleanOrder.tableNumber === undefined) {
-        delete (cleanOrder as any).tableNumber;
+        delete cleanOrder.tableNumber;
       }
       
-      if (cleanOrder.additionals === undefined || cleanOrder.additionals?.length === 0) {
-        delete (cleanOrder as any).additionals;
+      if (!cleanOrder.additionals || cleanOrder.additionals.length === 0) {
+        delete cleanOrder.additionals;
       }
       
       cleanOrder.items = cleanOrder.items.map(item => {
         const cleanItem = { ...item };
         if (cleanItem.notes === undefined) {
-          delete (cleanItem as any).notes;
+          delete cleanItem.notes;
         }
         return cleanItem;
       });
@@ -75,23 +76,22 @@ export function useOrders() {
     }
   };
 
-  // ← NEW: Update entire order
   const updateOrder = async (orderId: string, order: Omit<Order, 'id'>) => {
     try {
-      const cleanOrder = { ...order };
+      const cleanOrder: Partial<Order> & Omit<Order, 'id'> = { ...order };
       
       if (cleanOrder.tableNumber === undefined) {
-        delete (cleanOrder as any).tableNumber;
+        delete cleanOrder.tableNumber;
       }
       
-      if (cleanOrder.additionals === undefined || cleanOrder.additionals?.length === 0) {
-        delete (cleanOrder as any).additionals;
+      if (!cleanOrder.additionals || cleanOrder.additionals.length === 0) {
+        delete cleanOrder.additionals;
       }
       
       cleanOrder.items = cleanOrder.items.map(item => {
         const cleanItem = { ...item };
         if (cleanItem.notes === undefined) {
-          delete (cleanItem as any).notes;
+          delete cleanItem.notes;
         }
         return cleanItem;
       });
@@ -107,7 +107,7 @@ export function useOrders() {
   const updateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
     try {
       const orderRef = ref(database, `orders/${orderId}`);
-      const updates: any = { status: newStatus };
+      const updates: Partial<Order> = { status: newStatus };
       
       if (newStatus === 'preparing') {
         updates.startedAt = Date.now();
@@ -139,7 +139,7 @@ export function useOrders() {
     loading, 
     error, 
     addOrder,
-    updateOrder, // ← NEW
+    updateOrder,
     updateOrderStatus,
     deleteOrder 
   };

@@ -103,7 +103,6 @@ export function printReceipt(order: Order) {
 
 // --- HELPER: CREATE HIDDEN ELEMENT FOR CAPTURE ---
 async function captureReceipt(order: Order): Promise<Blob | null> {
-  // Buat elemen temporary yang tidak terlihat di layar tapi dirender
   const container = document.createElement('div');
   container.style.position = 'absolute';
   container.style.top = '-9999px';
@@ -113,15 +112,14 @@ async function captureReceipt(order: Order): Promise<Blob | null> {
 
   const element = container.querySelector('#receipt-capture') as HTMLElement;
   
-  // Tunggu sebentar agar gambar logo terload (jika ada cache)
   await new Promise(resolve => setTimeout(resolve, 500));
 
   try {
     const canvas = await html2canvas(element, {
-      scale: 2, // Kualitas lebih bagus (retina)
-      useCORS: true, // Penting agar bisa capture gambar dari folder public/
+      scale: 2,
+      useCORS: true,
       logging: false,
-      backgroundColor: '#ffffff', // Pastikan background putih
+      backgroundColor: '#ffffff',
     });
     document.body.removeChild(container);
     return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
@@ -149,7 +147,6 @@ export async function downloadReceipt(order: Order) {
 
 // --- 3. SHARE FUNCTION ---
 export async function shareReceipt(order: Order) {
-  // Cek apakah browser mendukung Web Share API untuk file
   if (!navigator.canShare) {
      alert('Browser Anda tidak mendukung fitur Share Gambar otomatis. Gunakan tombol Download, lalu share manual.');
      downloadReceipt(order);
@@ -169,14 +166,13 @@ export async function shareReceipt(order: Order) {
         text: `Ini struk digital untuk pesanan #${order.orderNumber}. Terima kasih!`,
       });
     } catch (error) {
-      if ((error as any).name !== 'AbortError') {
+      // Type assertion untuk error agar tidak 'any'
+      if (error instanceof Error && error.name !== 'AbortError') {
         console.error('Error sharing:', error);
-        // Fallback jika share gagal tapi bukan karena dibatalkan user
         downloadReceipt(order);
       }
     }
   } else {
-     // Fallback untuk desktop atau browser yang tidak support share file
      alert('Fitur share langsung tidak didukung di perangkat ini. Receipt akan di-download.');
      downloadReceipt(order);
   }

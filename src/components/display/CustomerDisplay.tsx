@@ -1,10 +1,16 @@
-// src/components/display/CustomerDisplay.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Order } from '@/types/order';
 import { Maximize, Minimize, Bell } from 'lucide-react';
 import Image from 'next/image';
+
+// Definisikan interface untuk window agar tidak perlu 'any'
+declare global {
+  interface Window {
+    webkitAudioContext: typeof AudioContext;
+  }
+}
 
 interface CustomerDisplayProps {
   orders: Order[];
@@ -48,7 +54,10 @@ export default function CustomerDisplay({ orders, soundEnabled = true }: Custome
   const playNotificationSound = () => {
     if (typeof window === 'undefined') return;
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      // Menggunakan window.AudioContext atau window.webkitAudioContext yang sudah di-type
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const audioContext = new AudioContextClass();
+      
       [0, 200, 400].forEach(delay => {
         setTimeout(() => {
           const oscillator = audioContext.createOscillator();
@@ -109,9 +118,9 @@ export default function CustomerDisplay({ orders, soundEnabled = true }: Custome
       {/* Animated Background Decorations */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-10 left-10 text-9xl opacity-20 animate-bounce">🥟</div>
-        <div className="absolute top-1/4 right-20 text-8xl opacity-15 animate-pulse" style={{animationDelay: '1s'}}>🍜</div>
-        <div className="absolute bottom-20 left-1/4 text-7xl opacity-20 animate-bounce" style={{animationDelay: '2s'}}>🥢</div>
-        <div className="absolute bottom-1/3 right-1/4 text-9xl opacity-15 animate-pulse" style={{animationDelay: '1.5s'}}>🥡</div>
+        <div className="absolute top-1/4 right-20 text-8xl opacity-15 animate-pulse" style={{animationDelay: '1s'}}>🥟</div>
+        <div className="absolute bottom-20 left-1/4 text-7xl opacity-20 animate-bounce" style={{animationDelay: '2s'}}>🥟</div>
+        <div className="absolute bottom-1/3 right-1/4 text-9xl opacity-15 animate-pulse" style={{animationDelay: '1.5s'}}>🥟</div>
         <div className="absolute top-1/2 left-1/2 text-6xl opacity-10 animate-bounce" style={{animationDelay: '0.5s'}}>🥟</div>
       </div>
 

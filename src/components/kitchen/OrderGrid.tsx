@@ -2,11 +2,19 @@
 
 import { Order, OrderStatus } from '@/types/order';
 import OrderCard from './OrderCard';
-import { Bell, ChefHat, CheckCircle } from 'lucide-react';
+import { Bell, ChefHat, CheckCircle, LucideIcon } from 'lucide-react';
 
 interface OrderGridProps {
   orders: Order[];
   onUpdateStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+}
+
+interface ColumnHeaderProps {
+  title: string;
+  count: number;
+  icon: LucideIcon;
+  colorClass: string;
+  bgClass: string;
 }
 
 export default function OrderGrid({ orders, onUpdateStatus }: OrderGridProps) {
@@ -14,7 +22,7 @@ export default function OrderGrid({ orders, onUpdateStatus }: OrderGridProps) {
   const preparingOrders = orders.filter(o => o.status === 'preparing');
   const readyOrders = orders.filter(o => o.status === 'ready');
 
-  const ColumnHeader = ({ title, count, icon: Icon, colorClass, bgClass }: any) => (
+  const ColumnHeader = ({ title, count, icon: Icon, colorClass, bgClass }: ColumnHeaderProps) => (
       <div className={`flex items-center justify-between p-4 rounded-xl mb-4 ${bgClass} border-2 ${colorClass}`}>
         <div className="flex items-center gap-3">
              <div className={`p-2 rounded-lg bg-white ${colorClass.replace('border', 'text')}`}>

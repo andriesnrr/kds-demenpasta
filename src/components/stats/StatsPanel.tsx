@@ -27,11 +27,9 @@ export default function StatsPanel({ orders }: StatsPanelProps) {
 
   const stats = useStats(orders, dateRange);
 
-  // Format tanggal untuk nama file
   const formatDateForFilename = (date: Date) => date.toLocaleDateString('id-ID').replace(/\//g, '-');
   const dateRangeStr = `${formatDateForFilename(dateRange.start)}_to_${formatDateForFilename(dateRange.end)}`;
 
-  // Opsi untuk ExportButton
   const exportOptions = [
     {
       label: 'Laporan Statistik Ringkas',
@@ -106,7 +104,7 @@ export default function StatsPanel({ orders }: StatsPanelProps) {
                   placeholderText="Dari tanggal"
                 />
               </div>
-              <span className="text-gray-400 font-bold">â€”</span>
+              <span className="text-gray-400 font-bold">—</span>
               <div className="relative flex-1">
                 <DatePicker
                   selected={customEndDate}
@@ -180,7 +178,7 @@ export default function StatsPanel({ orders }: StatsPanelProps) {
           <h3 className="text-lg font-bold mb-6 text-gray-900">Status Pesanan</h3>
           <div className="space-y-4">
             <ProgressBar label="🔔 Pending" value={stats.ordersByStatus.pending} total={stats.totalOrders} color="bg-yellow-500" bgColor="bg-yellow-50" textColor="text-yellow-700" />
-            <ProgressBar label="👨‍🍳 Preparing" value={stats.ordersByStatus.preparing} total={stats.totalOrders} color="bg-blue-500"TG bgColor="bg-blue-50" textColor="text-blue-700" />
+            <ProgressBar label="👨‍🍳 Preparing" value={stats.ordersByStatus.preparing} total={stats.totalOrders} color="bg-blue-500" bgColor="bg-blue-50" textColor="text-blue-700" />
             <ProgressBar label="✅ Ready" value={stats.ordersByStatus.ready} total={stats.totalOrders} color="bg-green-500" bgColor="bg-green-50" textColor="text-green-700" />
             <ProgressBar label="📦 Completed" value={stats.ordersByStatus.completed} total={stats.totalOrders} color="bg-gray-500" bgColor="bg-gray-50" textColor="text-gray-700" />
           </div>
@@ -340,8 +338,16 @@ export default function StatsPanel({ orders }: StatsPanelProps) {
   );
 }
 
-// Helper Component for Progress Bars
-function ProgressBar({ label, value, total, color, bgColor, textColor }: any) {
+interface ProgressBarProps {
+  label: string;
+  value: number;
+  total: number;
+  color: string;
+  bgColor: string;
+  textColor: string;
+}
+
+function ProgressBar({ label, value, total, color, bgColor, textColor }: ProgressBarProps) {
   const percentage = total > 0 ? (value / total) * 100 : 0;
   return (
     <div>

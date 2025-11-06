@@ -14,8 +14,8 @@ interface AdminPanelProps {
   showForm: boolean;
   setShowForm: (show: boolean) => void;
   onUpdateStatus: (orderId: string, status: OrderStatus) => Promise<void>;
-  filter: 'today' | 'all'; // Props baru
-  setFilter: (filter: 'today' | 'all') => void; // Props baru
+  filter: 'today' | 'all';
+  setFilter: (filter: 'today' | 'all') => void;
 }
 
 export default function AdminPanel({
@@ -41,11 +41,13 @@ export default function AdminPanel({
     setEditingOrder(null);
   };
 
+  // PERBAIKAN DI SINI: Menambahkan return type agar sesuai dengan ekspektasi OrderForm
   const handleSubmitOrder = async (order: Omit<Order, 'id'>) => {
     if (editingOrder) {
       await onUpdateOrder(editingOrder.id, order);
+      return null; // Mengembalikan null agar sesuai tipe Promise<string | null | undefined>
     } else {
-      await onAddOrder(order);
+      return await onAddOrder(order);
     }
   };
 

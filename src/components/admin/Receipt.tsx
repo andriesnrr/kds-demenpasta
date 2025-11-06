@@ -31,7 +31,7 @@ export default function Receipt({ order }: ReceiptProps) {
           📞 0851-7677-1352
         </p>
         <p className="text-xs text-gray-600">
-          📍 Surabaya, Indonesia
+          📍 Gresik, Indonesia
         </p>
       </div>
 
@@ -89,7 +89,7 @@ export default function Receipt({ order }: ReceiptProps) {
             </tr>
           </thead>
           <tbody>
-            {order.items.map((item, index) => (
+            {order.items.map((item) => (
               <tr key={item.id} className="border-b border-gray-200">
                 <td className="py-2">
                   <div className="font-semibold">{item.menuName}</div>
@@ -119,7 +119,7 @@ export default function Receipt({ order }: ReceiptProps) {
                     </div>
                   </td>
                 </tr>
-                {order.additionals.map((add, index) => (
+                {order.additionals.map((add) => (
                   <tr key={add.id} className="border-b border-gray-200">
                     <td className="py-2 pl-4">{add.name}</td>
                     <td className="text-center py-2">{add.quantity}</td>
