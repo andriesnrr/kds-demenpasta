@@ -1,22 +1,23 @@
+// src/components/display/CustomerDisplay.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Order } from '@/types/order';
 import { Maximize, Minimize } from 'lucide-react';
-import Link from 'next/link';
 
 interface CustomerDisplayProps {
   orders: Order[];
+  soundEnabled?: boolean;
 }
 
-export default function CustomerDisplay({ orders }: CustomerDisplayProps) {
-  const [currentTime, setCurrentTime] = useState<Date | null>(null); // ← CHANGED: Start with null
+export default function CustomerDisplay({ orders, soundEnabled = true }: CustomerDisplayProps) {
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [newReadyOrders, setNewReadyOrders] = useState<string[]>([]);
 
-  // Initialize time on client only
+  // Initialize time on client only to avoid hydration errors
   useEffect(() => {
-    setCurrentTime(new Date()); // ← SET initial time
+    setCurrentTime(new Date());
     
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -25,7 +26,7 @@ export default function CustomerDisplay({ orders }: CustomerDisplayProps) {
     return () => clearInterval(timer);
   }, []);
 
-  // Detect new ready orders
+  // Detect new ready orders and play sound
   useEffect(() => {
     const readyOrderIds = orders
       .filter(o => o.status === 'ready')
@@ -36,11 +37,47 @@ export default function CustomerDisplay({ orders }: CustomerDisplayProps) {
     if (newIds.length > 0) {
       setNewReadyOrders(prev => [...prev, ...newIds]);
       
+      // Play notification sound
+      if (soundEnabled) {
+        playNotificationSound();
+      }
+      
+      // Remove highlight after 5 seconds
       setTimeout(() => {
         setNewReadyOrders(prev => prev.filter(id => !newIds.includes(id)));
       }, 5000);
     }
-  }, [orders, newReadyOrders]);
+  }, [orders, newReadyOrders, soundEnabled]);
+
+  const playNotificationSound = () => {
+    if (typeof window === 'undefined') return;
+    
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      
+      // Play three beeps
+      [0, 200, 400].forEach(delay => {
+        setTimeout(() => {
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+
+          oscillator.frequency.value = 880; // A5 note
+          oscillator.type = 'sine';
+
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.15);
+        }, delay);
+      });
+    } catch (error) {
+      console.warn('Sound not supported:', error);
+    }
+  };
 
   const readyOrders = orders
     .filter(o => o.status === 'ready')
@@ -59,18 +96,7 @@ export default function CustomerDisplay({ orders }: CustomerDisplayProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-400 via-red-400 to-pink-400 relative">
-      {/* Controls */}
-      {!isFullscreen && (
-        <div className="absolute top-4 left-4 z-10">
-          <Link
-            href="/admin"
-            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-          >
-            ← Back
-          </Link>
-        </div>
-      )}
-
+      {/* Fullscreen Toggle */}
       <div className="absolute top-4 right-4 z-10">
         <button
           onClick={toggleFullscreen}
@@ -165,7 +191,6 @@ export default function CustomerDisplay({ orders }: CustomerDisplayProps) {
           <p className="text-3xl font-bold text-white drop-shadow-lg mb-4">
             Silakan ambil pesanan di kasir
           </p>
-          {/* ← FIXED: Only render time if available */}
           {currentTime && (
             <div className="text-2xl text-white/80">
               {currentTime.toLocaleTimeString('id-ID', {

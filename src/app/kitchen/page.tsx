@@ -1,4 +1,4 @@
-// app/kitchen/page.tsx
+// src/app/kitchen/page.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -7,32 +7,42 @@ import { useSound } from '@/lib/hooks/useSound';
 import OrderGrid from '@/components/kitchen/OrderGrid';
 import StationFilter from '@/components/kitchen/StationFilter';
 import { Order } from '@/types/order';
+import Link from 'next/link';
 
 export default function KitchenDisplay() {
   const [selectedStation, setSelectedStation] = useState('all');
-  const { orders, loading, updateOrderStatus } = useOrders(selectedStation);
+  const { orders, loading, updateOrderStatus } = useOrders();
   const { playNewOrder, playOrderReady } = useSound();
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const [previousOrderCount, setPreviousOrderCount] = useState(0);
 
-  // Update current time every second
+  // Initialize time on client only
   useEffect(() => {
+    setCurrentTime(new Date());
     const interval = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
-
     return () => clearInterval(interval);
   }, []);
 
+  // Filter orders by station
+  const filteredOrders = selectedStation === 'all' 
+    ? orders 
+    : orders.filter(o => o.status !== 'completed');
+
   // Play sound when new order arrives
   useEffect(() => {
-    const pendingOrders = orders.filter(o => o.status === 'pending');
-    if (pendingOrders.length > 0) {
-      playNewOrder();
+    if (orders.length > previousOrderCount) {
+      const pendingOrders = orders.filter(o => o.status === 'pending');
+      if (pendingOrders.length > 0) {
+        playNewOrder();
+      }
     }
-  }, [orders.length]);
+    setPreviousOrderCount(orders.length);
+  }, [orders.length, previousOrderCount, playNewOrder, orders]);
 
-  const handleStatusUpdate = (orderId: string, status: Order['status']) => {
-    updateOrderStatus(orderId, status);
+  const handleStatusUpdate = async (orderId: string, status: Order['status']) => {
+    await updateOrderStatus(orderId, status);
     if (status === 'ready') {
       playOrderReady();
     }
@@ -40,7 +50,7 @@ export default function KitchenDisplay() {
 
   const getOrderCounts = () => {
     const counts: Record<string, number> = {
-      all: orders.length,
+      all: orders.filter(o => o.status !== 'completed').length,
       grill: 0,
       fryer: 0,
       salad: 0,
@@ -49,8 +59,9 @@ export default function KitchenDisplay() {
     };
 
     orders.forEach(order => {
-      if (counts[order.station] !== undefined) {
-        counts[order.station]++;
+      if (order.status !== 'completed') {
+        // For now, all orders go to "all" - you can add station logic later
+        counts.all++;
       }
     });
 
@@ -58,10 +69,10 @@ export default function KitchenDisplay() {
   };
 
   const stats = {
-    pending: orders.filter(o => o.status === 'pending').length,
-    preparing: orders.filter(o => o.status === 'preparing').length,
-    ready: orders.filter(o => o.status === 'ready').length,
-    total: orders.length
+    pending: filteredOrders.filter(o => o.status === 'pending').length,
+    preparing: filteredOrders.filter(o => o.status === 'preparing').length,
+    ready: filteredOrders.filter(o => o.status === 'ready').length,
+    total: filteredOrders.length
   };
 
   if (loading) {
@@ -82,14 +93,24 @@ export default function KitchenDisplay() {
         <div className="max-w-full px-6 py-4">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Kitchen Display System</h1>
-              <p className="text-sm text-gray-600">
-                {currentTime.toLocaleTimeString('id-ID', { 
-                  hour: '2-digit', 
-                  minute: '2-digit',
-                  second: '2-digit'
-                })}
-              </p>
+              <div className="flex items-center gap-4">
+                <h1 className="text-3xl font-bold text-gray-900">Kitchen Display System</h1>
+                <Link
+                  href="/"
+                  className="text-sm text-blue-600 hover:text-blue-800 underline"
+                >
+                  ← Back
+                </Link>
+              </div>
+              {currentTime && (
+                <p className="text-sm text-gray-600">
+                  {currentTime.toLocaleTimeString('id-ID', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    second: '2-digit'
+                  })}
+                </p>
+              )}
             </div>
 
             {/* Stats */}
@@ -117,8 +138,8 @@ export default function KitchenDisplay() {
 
       {/* Main Content */}
       <main className="max-w-full px-6 py-6">
-        {/* Station Filter */}
-        <div className="mb-6">
+        {/* Station Filter - Optional, can be hidden for now */}
+        <div className="mb-6 hidden">
           <StationFilter
             selectedStation={selectedStation}
             onStationChange={setSelectedStation}
@@ -128,7 +149,7 @@ export default function KitchenDisplay() {
 
         {/* Orders Grid */}
         <OrderGrid
-          orders={orders}
+          orders={filteredOrders}
           onUpdateStatus={handleStatusUpdate}
         />
       </main>
