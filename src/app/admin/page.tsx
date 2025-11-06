@@ -1,40 +1,63 @@
 // src/app/admin/page.tsx
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useOrders } from '@/lib/hooks/useOrders';
 import AdminPanel from '@/components/admin/AdminPanel';
 import Link from 'next/link';
 import { formatCurrency } from '@/lib/utils/formatters';
 import { LayoutDashboard, ArrowLeft, UtensilsCrossed, BarChart3, Monitor } from 'lucide-react';
+import Image from 'next/image';
 
 export default function AdminDashboard() {
   const { orders, loading, error, addOrder, updateOrder, updateOrderStatus, deleteOrder } = useOrders();
   const [showForm, setShowForm] = useState(false);
+  const [filter, setFilter] = useState<'today' | 'all'>('today');
+
+  // Helper untuk cek apakah tanggal adalah hari ini
+  const isToday = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    return (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    );
+  };
+
+  // Data untuk STATS (selalu hari ini agar relevan)
+  const todayOrders = useMemo(() => orders.filter(o => isToday(o.createdAt)), [orders]);
+  
+  // Data untuk TABEL (tergantung filter yang dipilih)
+  const displayedOrders = useMemo(() => {
+    return filter === 'today' ? todayOrders : orders;
+  }, [orders, todayOrders, filter]);
 
   const stats = {
-    today: orders.length,
-    revenue: orders
+    today: todayOrders.length,
+    revenue: todayOrders
       .filter(o => o.status === 'completed')
       .reduce((sum, o) => sum + o.totalPrice, 0),
-    avgTime: orders.length > 0
+    avgTime: todayOrders.length > 0
       ? Math.floor(
-          orders
+          todayOrders
             .filter(o => o.startedAt && o.completedAt)
             .reduce((sum, o) => {
               const time = ((o.completedAt || 0) - (o.startedAt || 0)) / 60000;
               return sum + time;
-            }, 0) / orders.filter(o => o.startedAt && o.completedAt).length || 0
+            }, 0) / todayOrders.filter(o => o.startedAt && o.completedAt).length || 0
         )
       : 0,
-    pending: orders.filter(o => o.status === 'pending').length
+    pending: todayOrders.filter(o => o.status === 'pending').length
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-orange-50">
         <div className="text-center animate-pulse">
-          <div className="text-6xl mb-4">🥟</div>
+           <div className="relative w-20 h-20 mx-auto mb-4">
+             <Image src="/images/logo-demen-pasta.jpg" alt="Loading..." fill className="object-contain rounded-full" />
+          </div>
           <p className="text-xl text-gray-600 font-semibold">Memuat Dashboard...</p>
         </div>
       </div>
@@ -64,8 +87,13 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-3">
-              <div className="bg-orange-100 p-2 rounded-xl">
-                <LayoutDashboard size={24} className="text-orange-600" />
+               <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-orange-100">
+                <Image
+                   src="/images/logo-demen-pasta.jpg"
+                   alt="Logo"
+                   fill
+                   className="object-cover"
+                />
               </div>
               <div>
                 <h1 className="text-2xl font-black text-gray-900 tracking-tight">Admin Dashboard</h1>
@@ -114,7 +142,7 @@ export default function AdminDashboard() {
             <div className="text-4xl font-black">{stats.today}</div>
           </div>
           <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 text-white shadow-lg shadow-green-200 transform hover:scale-[1.02] transition-all">
-            <div className="text-green-100 text-sm font-semibold mb-1">Pendapatan</div>
+            <div className="text-green-100 text-sm font-semibold mb-1">Pendapatan Hari Ini</div>
             <div className="text-3xl font-black truncate">
               {formatCurrency(stats.revenue)}
             </div>
@@ -129,16 +157,18 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Admin Panel */}
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 md:p-8">
+        {/* Admin Panel Container */}
+        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 md:p-8 relative">
           <AdminPanel
-            orders={orders}
+            orders={displayedOrders}
             onAddOrder={addOrder}
             onUpdateOrder={updateOrder}
             onDeleteOrder={deleteOrder}
             showForm={showForm}
             setShowForm={setShowForm}
             onUpdateStatus={updateOrderStatus}
+            filter={filter}         // <-- Meneruskan state filter
+            setFilter={setFilter}   // <-- Meneruskan setter filter
           />
         </div>
       </main>

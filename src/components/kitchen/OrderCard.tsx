@@ -1,4 +1,3 @@
-// src/components/kitchen/OrderCard.tsx
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -73,16 +72,13 @@ export default function OrderCard({ order, onUpdateStatus }: OrderCardProps) {
         <div className="space-y-2 flex-1">
           {order.items.map((item, idx) => (
             <div key={idx} className="flex items-start gap-3 bg-gray-50 p-3 rounded-xl border border-gray-100">
-              <span className="text-2xl">🥟</span>
+              <span className="text-2xl mt-0.5">🥟</span>
               <div className="flex-1">
-                <div className="flex justify-between items-start">
-                  <span className="font-bold text-gray-800 text-lg leading-tight">
-                    {item.menuName}
-                  </span>
-                  <span className="bg-gray-900 text-white px-2.5 py-1 rounded-lg font-black text-lg ml-2">
-                    x{item.quantity}
-                  </span>
+                {/* UBAHAN DI SINI: Format Nama Menu - Jumlah pcs */}
+                <div className="font-bold text-gray-800 text-lg leading-tight">
+                  {item.menuName} - {item.quantity} pcs
                 </div>
+                
                 {item.notes && (
                   <div className="mt-1.5 flex items-start gap-1.5 text-red-600 bg-red-50 p-2 rounded-lg">
                     <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
@@ -97,9 +93,9 @@ export default function OrderCard({ order, onUpdateStatus }: OrderCardProps) {
              <div className="mt-2 pt-2 border-t border-dashed border-gray-200">
                <p className="text-xs font-bold text-gray-500 uppercase mb-1">Tambahan:</p>
                {order.additionals.map((add, idx) => (
-                 <div key={`add-${idx}`} className="flex justify-between text-sm bg-yellow-50 p-2 rounded-lg mb-1 text-yellow-800 font-medium">
-                    <span>+ {add.name}</span>
-                    <span>x{add.quantity}</span>
+                 <div key={`add-${idx}`} className="flex justify-between text-sm bg-yellow-50 p-2 rounded-lg mb-1 text-yellow-800 font-bold">
+                    {/* Format untuk additional juga disesuaikan agar konsisten */}
+                    <span>{add.name} - {add.quantity} pcs</span>
                  </div>
                ))}
              </div>

@@ -11,16 +11,17 @@ interface ReceiptProps {
 export default function Receipt({ order }: ReceiptProps) {
   return (
     <div className="receipt-container bg-white p-8 max-w-md mx-auto font-mono text-sm">
-      {/* Header with Logo */}
+      {/* Header with LOGO */}
       <div className="text-center mb-6 border-b-2 border-dashed border-gray-400 pb-4">
         <div className="flex justify-center mb-3">
-          <Image
-            src="/images/demen-pasta-logo.png"
-            alt="Demen Pasta Logo"
-            width={80}
-            height={80}
-            className="rounded-full"
-          />
+          <div className="relative w-20 h-20">
+             <Image
+                src="/images/logo-demen-pasta.jpg"
+                alt="Demen Pasta Logo"
+                fill
+                className="object-contain rounded-full"
+             />
+          </div>
         </div>
         <h1 className="text-2xl font-bold text-brand-black">DEMEN PASTA</h1>
         <p className="text-xs text-gray-600 mt-1">

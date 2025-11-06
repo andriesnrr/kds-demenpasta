@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Order } from '@/types/order';
 import { Maximize, Minimize, Bell } from 'lucide-react';
+import Image from 'next/image';
 
 interface CustomerDisplayProps {
   orders: Order[];
@@ -67,8 +68,7 @@ export default function CustomerDisplay({ orders, soundEnabled = true }: Custome
     }
   };
 
-  // Derived data (kept original slice(0, 4) logic to prevent overcrowding, 
-  // though the new UI could handle up to 6 nicely if you wanted to change it later)
+  // Derived data
   const readyOrders = orders
     .filter(o => o.status === 'ready')
     .sort((a, b) => (b.readyAt || 0) - (a.readyAt || 0))
@@ -109,13 +109,13 @@ export default function CustomerDisplay({ orders, soundEnabled = true }: Custome
       {/* Animated Background Decorations */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-10 left-10 text-9xl opacity-20 animate-bounce">🥟</div>
-        <div className="absolute top-1/4 right-20 text-8xl opacity-15 animate-pulse" style={{animationDelay: '1s'}}>🥟</div>
-        <div className="absolute bottom-20 left-1/4 text-7xl opacity-20 animate-bounce" style={{animationDelay: '2s'}}>🥟</div>
-        <div className="absolute bottom-1/3 right-1/4 text-9xl opacity-15 animate-pulse" style={{animationDelay: '1.5s'}}>🥟</div>
+        <div className="absolute top-1/4 right-20 text-8xl opacity-15 animate-pulse" style={{animationDelay: '1s'}}>🍜</div>
+        <div className="absolute bottom-20 left-1/4 text-7xl opacity-20 animate-bounce" style={{animationDelay: '2s'}}>🥢</div>
+        <div className="absolute bottom-1/3 right-1/4 text-9xl opacity-15 animate-pulse" style={{animationDelay: '1.5s'}}>🥡</div>
         <div className="absolute top-1/2 left-1/2 text-6xl opacity-10 animate-bounce" style={{animationDelay: '0.5s'}}>🥟</div>
       </div>
 
-      {/* Fullscreen Toggle (Restyled to match new theme) */}
+      {/* Fullscreen Toggle */}
       <div className="absolute top-6 right-6 z-50">
         <button
           onClick={toggleFullscreen}
@@ -129,10 +129,15 @@ export default function CustomerDisplay({ orders, soundEnabled = true }: Custome
       </div>
 
       <div className="relative z-10 min-h-screen flex flex-col p-6 md:p-8">
-        {/* Header */}
+        {/* Header with LOGO */}
         <div className="text-center mb-12 animate-fadeIn mt-8 md:mt-0">
-          <div className="inline-block mb-2 animate-bounce">
-            <div className="text-7xl md:text-8xl drop-shadow-2xl">🥟</div>
+          <div className="relative w-32 h-32 md:w-48 md:h-48 mx-auto mb-4 animate-bounce-slow">
+             <Image
+                src="/images/logo-demen-pasta.jpg"
+                alt="Demen Pasta Logo"
+                fill
+                className="object-contain drop-shadow-2xl rounded-full"
+             />
           </div>
           <h1 className="text-5xl md:text-7xl font-black text-white drop-shadow-2xl mb-6 tracking-tight">
             DIMSUM AMPAS TAHU
@@ -291,6 +296,13 @@ export default function CustomerDisplay({ orders, soundEnabled = true }: Custome
         }
         .animate-fadeIn {
           animation: fadeIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes bounce-slow {
+          0%, 100% { transform: translateY(-5%); }
+          50% { transform: translateY(0); }
+        }
+        .animate-bounce-slow {
+          animation: bounce-slow 3s ease-in-out infinite;
         }
       `}</style>
     </div>

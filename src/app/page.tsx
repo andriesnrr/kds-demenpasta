@@ -1,8 +1,9 @@
-// app/page.tsx
+// src/app/page.tsx
 'use client';
 
 import React from 'react';
 import { ChefHat, BarChart3, Monitor, Utensils } from 'lucide-react';
+import Image from 'next/image';
 
 export default function ImprovedHome() {
   const navigate = (path: string) => {
@@ -16,15 +17,21 @@ export default function ImprovedHome() {
         <div className="absolute top-20 left-10 text-9xl opacity-10 animate-bounce">🥟</div>
         <div className="absolute top-40 right-20 text-7xl opacity-10 animate-pulse" style={{animationDelay: '1s'}}>🍜</div>
         <div className="absolute bottom-20 left-1/4 text-8xl opacity-10 animate-bounce" style={{animationDelay: '2s'}}>🥢</div>
-        <div className="absolute bottom-40 right-1/4 text-6xl opacity-10 animate-pulse" style={{animationDelay: '1.5s'}}>🍱</div>
+        <div className="absolute bottom-40 right-1/4 text-6xl opacity-10 animate-pulse" style={{animationDelay: '1.5s'}}>🥡</div>
       </div>
 
       <div className="min-h-screen flex items-center justify-center p-4 sm:p-6 relative z-10">
         <div className="w-full max-w-6xl">
-          {/* Header Section */}
+          {/* Header Section with LOGO */}
           <div className="text-center mb-12 animate-fadeIn">
-            <div className="inline-block mb-6 transform hover:scale-110 transition-transform duration-300">
-              <div className="text-9xl drop-shadow-2xl">🥟</div>
+            <div className="relative w-48 h-48 sm:w-64 sm:h-64 mx-auto mb-6 transform hover:scale-105 transition-transform duration-300">
+               <Image
+                  src="/images/logo-demen-pasta.jpg"
+                  alt="Demen Pasta Logo"
+                  fill
+                  className="object-contain drop-shadow-2xl rounded-full"
+                  priority
+               />
             </div>
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-black text-white mb-4 drop-shadow-2xl tracking-tight">
               DEMEN PASTA 
@@ -68,10 +75,6 @@ export default function ImprovedHome() {
                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                   <span className="text-sm">Status management</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-700">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm">Timer & notifications</span>
-                </div>
               </div>
 
               <div className="mt-6 flex items-center justify-between text-blue-600 font-semibold">
@@ -107,10 +110,6 @@ export default function ImprovedHome() {
                 <div className="flex items-center gap-2 text-gray-700">
                   <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                   <span className="text-sm">Tambah & edit pesanan</span>
-                </div>
-                <div className="flex items-center gap-2 text-gray-700">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <span className="text-sm">Manage order status</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-700">
                   <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
