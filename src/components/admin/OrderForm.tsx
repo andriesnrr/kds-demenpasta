@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Order, OrderItem, OrderType, AdditionalOrderItem, PaymentMethod } from '@/types/order';
 import { MENU_DATA, ADDITIONAL_ITEMS } from '@/types/menu';
-import { X, Plus, Minus, ShoppingCart, User, Phone, UtensilsCrossed, Trash2, CreditCard } from 'lucide-react';
+import { X, Plus, Minus, ShoppingCart, User, Phone, UtensilsCrossed, Trash2, CreditCard, AlertTriangle, Loader2 } from 'lucide-react';
 import { generateOrderNumber } from '@/lib/utils/orderHelpers';
 import { formatCurrency } from '@/lib/utils/formatters';
+import { useStock } from '@/lib/hooks/useStock';
 
 interface OrderFormProps {
   onSubmit: (order: Omit<Order, 'id'>) => Promise<string | null | undefined>;
@@ -18,7 +19,6 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
   const [customerName, setCustomerName] = useState(editOrder?.customerName || '');
   const [customerPhone, setCustomerPhone] = useState(editOrder?.customerPhone || '');
   const [orderType, setOrderType] = useState<OrderType>(editOrder?.orderType || 'takeaway');
-  // TAMBAHAN BARU: State untuk payment method (default 'cash')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(editOrder?.paymentMethod || 'cash');
   const [tableNumber, setTableNumber] = useState(editOrder?.tableNumber || '');
   const [cart, setCart] = useState<OrderItem[]>(editOrder?.items || []);
@@ -29,11 +29,61 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Ambil data stok & status loading
+  const { stock, loading: stockLoading } = useStock();
+
+  // --- HITUNG STOK ASAL (Untuk Edit Order) ---
+  const originalUsage = useMemo(() => {
+    if (!editOrder) return { ayam: 0, jamur: 0 };
+    let ayam = 0, jamur = 0;
+    editOrder.items.forEach(item => {
+      const menu = MENU_DATA.find(m => m.id === item.menuId);
+      if (menu) {
+        ayam += menu.composition.ayam * item.quantity;
+        jamur += menu.composition.jamur * item.quantity;
+      }
+    });
+    return { ayam, jamur };
+  }, [editOrder]);
+
   // --- HANDLERS ---
   const addToCart = () => {
     if (!selectedMenu) return;
     const menu = MENU_DATA.find(m => m.id === selectedMenu);
     if (!menu) return;
+
+    // --- VALIDASI STOK ---
+    const requiredAyamNew = menu.composition.ayam * quantity;
+    const requiredJamurNew = menu.composition.jamur * quantity;
+
+    let currentCartAyam = 0;
+    let currentCartJamur = 0;
+
+    cart.forEach(cartItem => {
+      const cartMenu = MENU_DATA.find(m => m.id === cartItem.menuId);
+      if (cartMenu) {
+        currentCartAyam += cartMenu.composition.ayam * cartItem.quantity;
+        currentCartJamur += cartMenu.composition.jamur * cartItem.quantity;
+      }
+    });
+
+    const totalAyamNeeded = currentCartAyam + requiredAyamNew;
+    const totalJamurNeeded = currentCartJamur + requiredJamurNew;
+
+    // Hitung stok tersedia (Stok DB + Stok yang sedang dipegang order ini jika edit)
+    const effectiveStockAyam = stock.ayam + originalUsage.ayam;
+    const effectiveStockJamur = stock.jamur + originalUsage.jamur;
+
+    if (totalAyamNeeded > effectiveStockAyam) {
+      alert(`❌ STOK AYAM TIDAK CUKUP!\n\nStok Tersedia: ${effectiveStockAyam} pcs\nTotal Dibutuhkan: ${totalAyamNeeded} pcs`);
+      return;
+    }
+
+    if (totalJamurNeeded > effectiveStockJamur) {
+      alert(`❌ STOK JAMUR TIDAK CUKUP!\n\nStok Tersedia: ${effectiveStockJamur} pcs\nTotal Dibutuhkan: ${totalJamurNeeded} pcs`);
+      return;
+    }
+    // ---------------------
 
     const item: OrderItem = {
       id: `item_${Date.now()}`,
@@ -107,7 +157,6 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
         completedAt: editOrder?.completedAt || null,
         readyAt: editOrder?.readyAt || null,
         orderType,
-        // TAMBAHAN BARU: Masukkan paymentMethod ke object order
         paymentMethod,
         tableNumber: orderType === 'dine-in' ? tableNumber : undefined,
         customerName,
@@ -135,7 +184,6 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
     return () => { document.body.style.overflow = 'unset'; };
   }, []);
 
-  // --- RENDER ---
   return (
     <div className="bg-gradient-to-br from-orange-50 via-red-50 to-pink-50 rounded-3xl shadow-2xl overflow-hidden">
       {/* Header */}
@@ -151,10 +199,7 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
             <p className="text-gray-500 text-sm font-medium">Isi detail pesanan pelanggan</p>
           </div>
         </div>
-        <button 
-          onClick={onClose}
-          className="bg-gray-100 hover:bg-gray-200 p-2 rounded-full transition-colors"
-        >
+        <button onClick={onClose} className="bg-gray-100 hover:bg-gray-200 p-2 rounded-full transition-colors">
           <X size={24} className="text-gray-600" />
         </button>
       </div>
@@ -162,8 +207,26 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
       <div className="p-6 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
         {/* Left Column - Forms */}
         <div className="lg:col-span-2 space-y-6">
+          
+          {/* Info Stok Kecil */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 flex items-center justify-between text-sm text-yellow-800">
+             <div className="flex items-center gap-2">
+               {stockLoading ? <Loader2 size={16} className="animate-spin" /> : <AlertTriangle size={16} />}
+               <span className="font-bold">
+                  {stockLoading ? 'Memuat data stok...' : 'Sisa Stok Siap Jual:'}
+               </span>
+             </div>
+             {!stockLoading && (
+               <div className="flex gap-4">
+                 <span>Ayam: <b className={stock.ayam === 0 ? 'text-red-600' : 'text-gray-900'}>{stock.ayam}</b></span>
+                 <span>Jamur: <b className={stock.jamur === 0 ? 'text-red-600' : 'text-gray-900'}>{stock.jamur}</b></span>
+               </div>
+             )}
+          </div>
+
           {/* Customer Info Card */}
           <div className="bg-white rounded-2xl shadow-sm p-6 border-2 border-blue-100">
+            {/* ... (Isi form customer TETAP SAMA) ... */}
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-blue-100 p-2.5 rounded-xl">
                 <User size={22} className="text-blue-600" />
@@ -175,74 +238,37 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Nama Customer *</label>
-                  <input
-                    type="text"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-medium"
-                    placeholder="Nama customer"
-                  />
+                  <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 outline-none font-medium" placeholder="Nama customer" />
                 </div>
-
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Nomor HP</label>
                   <div className="relative">
                     <Phone size={20} className="absolute left-4 top-3.5 text-gray-400" />
-                    <input
-                      type="tel"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      className="w-full border-2 border-gray-200 rounded-xl pl-12 pr-4 py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-medium"
-                      placeholder="08xxxxxxxxxx"
-                    />
+                    <input type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full border-2 border-gray-200 rounded-xl pl-12 pr-4 py-3 focus:border-blue-500 outline-none font-medium" placeholder="08xxxxxxxxxx" />
                   </div>
                 </div>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Tipe Pesanan</label>
-                  <select
-                    value={orderType}
-                    onChange={(e) => setOrderType(e.target.value as OrderType)}
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold text-gray-800"
-                  >
+                  <select value={orderType} onChange={(e) => setOrderType(e.target.value as OrderType)} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 outline-none font-bold text-gray-800">
                     <option value="takeaway">📦 Takeaway</option>
                     <option value="dine-in">🍽️ Dine In</option>
                     <option value="delivery">🛵 Delivery</option>
                   </select>
                 </div>
-
-                {/* TAMBAHAN BARU: Dropdown Metode Pembayaran */}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">
-                     <CreditCard size={16} /> Pembayaran
-                  </label>
-                  <select
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-                    className={`w-full border-2 rounded-xl px-4 py-3 focus:ring-4 outline-none transition-all font-bold ${
-                        paymentMethod === 'qris' 
-                        ? 'border-blue-500 bg-blue-50 text-blue-700 focus:ring-blue-100' 
-                        : 'border-green-500 bg-green-50 text-green-700 focus:ring-green-100'
-                    }`}
-                  >
+                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-1"><CreditCard size={16} /> Pembayaran</label>
+                  <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)} className={`w-full border-2 rounded-xl px-4 py-3 outline-none font-bold ${paymentMethod === 'qris' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-green-500 bg-green-50 text-green-700'}`}>
                     <option value="cash">💵 Cash (Tunai)</option>
                     <option value="qris">📱 QRIS (Scan)</option>
                   </select>
                 </div>
               </div>
-              
               {orderType === 'dine-in' && (
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Nomor Meja *</label>
-                    <input
-                      type="text"
-                      value={tableNumber}
-                      onChange={(e) => setTableNumber(e.target.value)}
-                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold"
-                      placeholder="Contoh: 5"
-                    />
+                    <input type="text" value={tableNumber} onChange={(e) => setTableNumber(e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 outline-none font-bold" placeholder="Contoh: 5" />
                   </div>
                 )}
             </div>
@@ -278,96 +304,47 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
                 <div className="flex-1">
                   <label className="block text-sm font-bold text-gray-700 mb-2">Jumlah</label>
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="bg-gray-100 hover:bg-gray-200 w-12 h-12 rounded-xl font-bold transition-colors flex items-center justify-center"
-                    >
-                      <Minus size={20} />
-                    </button>
-                    <input
-                      type="number"
-                      value={quantity}
-                      onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-20 border-2 border-gray-200 rounded-xl px-2 py-3 text-center font-black text-xl focus:border-orange-500 outline-none"
-                    />
-                    <button
-                      onClick={() => setQuantity(quantity + 1)}
-                      className="bg-orange-500 hover:bg-orange-600 text-white w-12 h-12 rounded-xl font-bold transition-colors flex items-center justify-center shadow-md"
-                    >
-                      <Plus size={20} />
-                    </button>
+                    <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="bg-gray-100 hover:bg-gray-200 w-12 h-12 rounded-xl font-bold flex items-center justify-center"><Minus size={20} /></button>
+                    <input type="number" value={quantity} onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))} className="w-20 border-2 border-gray-200 rounded-xl px-2 py-3 text-center font-black text-xl focus:border-orange-500 outline-none" />
+                    <button onClick={() => setQuantity(quantity + 1)} className="bg-orange-500 hover:bg-orange-600 text-white w-12 h-12 rounded-xl font-bold flex items-center justify-center shadow-md"><Plus size={20} /></button>
                   </div>
                 </div>
 
                 <div className="flex-[2]">
                   <label className="block text-sm font-bold text-gray-700 mb-2">Catatan (opsional)</label>
-                  <input
-                    type="text"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-orange-500 focus:ring-4 focus:ring-orange-50 outline-none transition-all"
-                    placeholder="Contoh: Pedas banget, Jangan pakai saos"
-                  />
+                  <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-orange-500 outline-none" placeholder="Contoh: Pedas banget" />
                 </div>
               </div>
 
               <button
                 onClick={addToCart}
-                disabled={!selectedMenu}
+                // BUTTON DISABLED JIKA LOADING ATAU MENU BELUM DIPILIH
+                disabled={stockLoading || !selectedMenu}
                 className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 disabled:from-gray-300 disabled:to-gray-400 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg disabled:shadow-none flex items-center justify-center gap-2 text-lg"
               >
-                <Plus size={24} />
-                Tambah ke Keranjang
+                {stockLoading ? <Loader2 size={24} className="animate-spin" /> : <Plus size={24} />}
+                {stockLoading ? 'Memuat Stok...' : 'Tambah ke Keranjang'}
               </button>
             </div>
           </div>
 
           {/* Additional Items Card */}
           <div className="bg-white rounded-2xl shadow-sm p-6 border-2 border-yellow-200">
-            <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <span>🍟</span> Additional / Topping
-            </h3>
+             {/* ... (Bagian Additional Item TETAP SAMA) ... */}
+             <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2"><span>🍟</span> Additional / Topping</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {ADDITIONAL_ITEMS.map(additional => {
                 const qty = getAdditionalQuantity(additional.id);
                 return (
-                  <div
-                    key={additional.id}
-                    className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${
-                      qty > 0 ? 'bg-yellow-50 border-yellow-300' : 'bg-white border-gray-200 hover:border-yellow-200'
-                    }`}
-                  >
+                  <div key={additional.id} className={`flex items-center justify-between p-3 rounded-xl border-2 transition-all ${qty > 0 ? 'bg-yellow-50 border-yellow-300' : 'bg-white border-gray-200'}`}>
                     <div>
                       <div className="font-bold text-gray-800">{additional.name}</div>
                       <div className="text-sm font-semibold text-orange-600">{formatCurrency(additional.price)}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      {qty > 0 && (
-                        <button
-                          onClick={() => updateAdditional(additional.id, -1)}
-                          className="w-8 h-8 bg-white border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50"
-                        >
-                          <Minus size={14} />
-                        </button>
-                      )}
-                      {qty > 0 ? (
-                        <span className="w-6 text-center font-black">{qty}</span>
-                      ) : (
-                        <button
-                           onClick={() => updateAdditional(additional.id, 1)}
-                           className="w-8 h-8 bg-gray-100 hover:bg-orange-500 hover:text-white rounded-lg flex items-center justify-center transition-colors"
-                        >
-                          <Plus size={18} />
-                        </button>
-                      )}
-                      {qty > 0 && (
-                        <button
-                          onClick={() => updateAdditional(additional.id, 1)}
-                          className="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center hover:bg-orange-600"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      )}
+                      {qty > 0 && <button onClick={() => updateAdditional(additional.id, -1)} className="w-8 h-8 bg-white border border-gray-300 rounded-lg flex items-center justify-center"><Minus size={14} /></button>}
+                      {qty > 0 ? <span className="w-6 text-center font-black">{qty}</span> : <button onClick={() => updateAdditional(additional.id, 1)} className="w-8 h-8 bg-gray-100 hover:bg-orange-500 hover:text-white rounded-lg flex items-center justify-center"><Plus size={18} /></button>}
+                      {qty > 0 && <button onClick={() => updateAdditional(additional.id, 1)} className="w-8 h-8 bg-orange-500 text-white rounded-lg flex items-center justify-center"><Plus size={14} /></button>}
                     </div>
                   </div>
                 );
@@ -387,12 +364,9 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
             </div>
 
             <div className="flex-1 overflow-y-auto p-5 space-y-4">
-              {cart.length === 0 && additionals.length === 0 ? (
-                <div className="text-center py-10 text-gray-400 flex flex-col items-center">
-                  <ShoppingCart size={64} className="opacity-20 mb-4" />
-                  <p className="font-medium">Keranjang masih kosong</p>
-                  <p className="text-sm">Tambahkan menu dari form di samping</p>
-                </div>
+               {/* ... (List item di keranjang TETAP SAMA) ... */}
+               {cart.length === 0 && additionals.length === 0 ? (
+                <div className="text-center py-10 text-gray-400 flex flex-col items-center"><ShoppingCart size={64} className="opacity-20 mb-4" /><p className="font-medium">Keranjang masih kosong</p></div>
               ) : (
                 <>
                   <div className="space-y-3">
@@ -401,29 +375,17 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
                         <div className="flex justify-between items-start">
                           <div>
                             <div className="font-bold text-gray-900">🥟 {item.menuName}</div>
-                            <div className="text-sm text-gray-500 font-medium mt-0.5">
-                              {item.quantity} x {formatCurrency(item.price)}
-                            </div>
-                            {item.notes && (
-                              <div className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-md mt-2 inline-block font-medium">
-                                📝 {item.notes}
-                              </div>
-                            )}
+                            <div className="text-sm text-gray-500 font-medium mt-0.5">{item.quantity} x {formatCurrency(item.price)}</div>
+                            {item.notes && <div className="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-md mt-2 inline-block font-medium">📝 {item.notes}</div>}
                           </div>
                           <div className="text-right">
                             <div className="font-black text-purple-600">{formatCurrency(item.subtotal)}</div>
-                            <button
-                              onClick={() => removeFromCart(item.id)}
-                              className="text-red-400 hover:text-red-600 p-1.5 mt-1 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full shadow-sm border border-gray-100"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                            <button onClick={() => removeFromCart(item.id)} className="text-red-400 hover:text-red-600 p-1.5 mt-1 absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full shadow-sm border border-gray-100"><Trash2 size={16} /></button>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
-
                   {additionals.length > 0 && (
                     <div className="bg-yellow-50/80 border-2 border-yellow-100 rounded-xl p-3 space-y-2">
                       <div className="text-xs font-bold text-yellow-800 uppercase tracking-wider mb-1">Additional</div>

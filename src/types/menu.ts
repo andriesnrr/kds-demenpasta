@@ -13,6 +13,7 @@ export const ADDITIONAL_ITEMS: AdditionalItem[] = [
 ];
 
 export const MENU_DATA = [
+  // --- MENU LAMA (Pack 4 & 6) ---
   {
     id: 'pack_4_ayam',
     name: 'Pack 4 - Demen Ayam',
@@ -71,6 +72,50 @@ export const MENU_DATA = [
     composition: { ayam: 3, jamur: 3 },
     price: 23000,
     prepTime: 12,
+    available: true,
+  },
+
+  // --- MENU BARU: DIMSUM PARTY (Isi 16) ---
+  {
+    id: 'party_16_ayam',
+    name: 'Dimsum Party (16) - Ayam',
+    packSize: 16 as PackSize,
+    variant: 'ayam' as Variant,
+    composition: { ayam: 16, jamur: 0 },
+    price: 62000,
+    prepTime: 20,
+    available: true,
+  },
+  {
+    id: 'party_16_jamur',
+    name: 'Dimsum Party (16) - Jamur',
+    packSize: 16 as PackSize,
+    variant: 'jamur' as Variant,
+    composition: { ayam: 0, jamur: 16 },
+    price: 65000,
+    prepTime: 20,
+    available: true,
+  },
+  {
+    id: 'party_16_mix',
+    name: 'Dimsum Party (16) - Mix',
+    packSize: 16 as PackSize,
+    variant: 'mix' as Variant,
+    composition: { ayam: 8, jamur: 8 }, // Default mix 8-8
+    price: 63000,
+    prepTime: 20,
+    available: true,
+  },
+
+  // --- MENU BARU: DIMSUM BOUQUET (Isi 14) ---
+  {
+    id: 'bouquet_14',
+    name: 'Dimsum Bouquet (14)',
+    packSize: 14 as PackSize,
+    variant: 'mix' as Variant, // Bouquet biasanya mix agar variatif
+    composition: { ayam: 7, jamur: 7 }, // Default mix 7-7
+    price: 100000,
+    prepTime: 30, // Waktu prepare lebih lama untuk merangkai bouquet
     available: true,
   },
 ];
