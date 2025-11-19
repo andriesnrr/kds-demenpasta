@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Order, OrderItem, OrderType, AdditionalOrderItem } from '@/types/order';
+import { Order, OrderItem, OrderType, AdditionalOrderItem, PaymentMethod } from '@/types/order';
 import { MENU_DATA, ADDITIONAL_ITEMS } from '@/types/menu';
-import { X, Plus, Minus, ShoppingCart, User, Phone, UtensilsCrossed, Trash2 } from 'lucide-react';
+import { X, Plus, Minus, ShoppingCart, User, Phone, UtensilsCrossed, Trash2, CreditCard } from 'lucide-react';
 import { generateOrderNumber } from '@/lib/utils/orderHelpers';
 import { formatCurrency } from '@/lib/utils/formatters';
 
@@ -18,6 +18,8 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
   const [customerName, setCustomerName] = useState(editOrder?.customerName || '');
   const [customerPhone, setCustomerPhone] = useState(editOrder?.customerPhone || '');
   const [orderType, setOrderType] = useState<OrderType>(editOrder?.orderType || 'takeaway');
+  // TAMBAHAN BARU: State untuk payment method (default 'cash')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(editOrder?.paymentMethod || 'cash');
   const [tableNumber, setTableNumber] = useState(editOrder?.tableNumber || '');
   const [cart, setCart] = useState<OrderItem[]>(editOrder?.items || []);
   const [additionals, setAdditionals] = useState<AdditionalOrderItem[]>(editOrder?.additionals || []);
@@ -105,6 +107,8 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
         completedAt: editOrder?.completedAt || null,
         readyAt: editOrder?.readyAt || null,
         orderType,
+        // TAMBAHAN BARU: Masukkan paymentMethod ke object order
+        paymentMethod,
         tableNumber: orderType === 'dine-in' ? tableNumber : undefined,
         customerName,
         customerPhone,
@@ -126,7 +130,6 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
     }
   };
 
-  // Disable background scroll when modal is open
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = 'unset'; };
@@ -169,28 +172,30 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
             </div>
 
             <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Nama Customer *</label>
-                <input
-                  type="text"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-medium"
-                  placeholder="Masukkan nama customer"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Nomor HP</label>
-                <div className="relative">
-                  <Phone size={20} className="absolute left-4 top-3.5 text-gray-400" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Nama Customer *</label>
                   <input
-                    type="tel"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-xl pl-12 pr-4 py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-medium"
-                    placeholder="08xxxxxxxxxx"
+                    type="text"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-medium"
+                    placeholder="Nama customer"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Nomor HP</label>
+                  <div className="relative">
+                    <Phone size={20} className="absolute left-4 top-3.5 text-gray-400" />
+                    <input
+                      type="tel"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      className="w-full border-2 border-gray-200 rounded-xl pl-12 pr-4 py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-medium"
+                      placeholder="08xxxxxxxxxx"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -208,19 +213,38 @@ export default function OrderForm({ onSubmit, onClose, editOrder }: OrderFormPro
                   </select>
                 </div>
 
-                {orderType === 'dine-in' && (
+                {/* TAMBAHAN BARU: Dropdown Metode Pembayaran */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-1">
+                     <CreditCard size={16} /> Pembayaran
+                  </label>
+                  <select
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                    className={`w-full border-2 rounded-xl px-4 py-3 focus:ring-4 outline-none transition-all font-bold ${
+                        paymentMethod === 'qris' 
+                        ? 'border-blue-500 bg-blue-50 text-blue-700 focus:ring-blue-100' 
+                        : 'border-green-500 bg-green-50 text-green-700 focus:ring-green-100'
+                    }`}
+                  >
+                    <option value="cash">💵 Cash (Tunai)</option>
+                    <option value="qris">📱 QRIS (Scan)</option>
+                  </select>
+                </div>
+              </div>
+              
+              {orderType === 'dine-in' && (
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Nomor Meja *</label>
                     <input
                       type="text"
                       value={tableNumber}
                       onChange={(e) => setTableNumber(e.target.value)}
-                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold text-center"
+                      className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all font-bold"
                       placeholder="Contoh: 5"
                     />
                   </div>
                 )}
-              </div>
             </div>
           </div>
 

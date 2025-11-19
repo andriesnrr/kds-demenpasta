@@ -2,6 +2,8 @@ export type PackSize = 4 | 6;
 export type Variant = 'ayam' | 'jamur' | 'mix';
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed';
 export type OrderType = 'dine-in' | 'takeaway' | 'delivery';
+// TAMBAHAN BARU: Tipe Metode Pembayaran
+export type PaymentMethod = 'cash' | 'qris';
 
 export interface MenuItem {
   id: string;
@@ -45,10 +47,12 @@ export interface Order {
   readyAt: number | null;
   orderType: OrderType;
   tableNumber?: string;
+  // TAMBAHAN BARU: Field Metode Pembayaran
+  paymentMethod: PaymentMethod;
   customerName: string;
   customerPhone: string;
   items: OrderItem[];
-  additionals?: AdditionalOrderItem[]; // ← NEW
+  additionals?: AdditionalOrderItem[];
   totalItems: number;
   totalPieces: number;
   totalPrice: number;

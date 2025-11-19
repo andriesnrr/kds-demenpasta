@@ -9,6 +9,12 @@ interface ReceiptProps {
 }
 
 export default function Receipt({ order }: ReceiptProps) {
+  // Helper untuk label payment method agar lebih rapi
+  const getPaymentLabel = (method: string | undefined) => {
+      if (method === 'qris') return 'QRIS';
+      return 'CASH'; // Default jika tidak ada data atau 'cash'
+  };
+
   return (
     <div className="receipt-container bg-white p-8 max-w-md mx-auto font-mono text-sm">
       {/* Header with LOGO */}
@@ -146,6 +152,11 @@ export default function Receipt({ order }: ReceiptProps) {
         <div className="flex justify-between mb-2">
           <span>Total Pieces:</span>
           <span className="font-semibold">{order.totalPieces} pcs</span>
+        </div>
+        {/* TAMBAHAN BARU: Tampilkan Payment Method */}
+        <div className="flex justify-between mb-2">
+          <span>Pembayaran:</span>
+          <span className="font-bold uppercase">{getPaymentLabel(order.paymentMethod)}</span>
         </div>
       </div>
 
